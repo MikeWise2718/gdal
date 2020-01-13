@@ -30,9 +30,17 @@ gt = ds.GetGeoTransform()
 minx = gt[0]
 miny = gt[3] + width*gt[4] + height*gt[5] 
 
+minx = gt[0]
+miny = gt[3] + width*gt[4] + height*gt[5] 
+maxx = gt[0] + width*gt[1] + height*gt[2]
+maxy = gt[3] 
+
 #get the coordinates in lat long
-latlong = transform.TransformPoint(minx,miny) 
+latlongminmin = transform.TransformPoint(minx,miny) 
+latlongmaxmax = transform.TransformPoint(maxx,maxy) 
 print(f"width:{width} height:{height}")
-print(f"minx:{minx} miny:{miny}")
-print(f"latlong:{latlong}")
 print(f"gt:{gt}")
+print(f"minx:{minx} miny:{miny}")
+print(f"maxx:{maxx} maxy:{maxy}")
+print(f"latlongminmin:{latlongminmin}")
+print(f"latlongmaxmax:{latlongmaxmax}")
