@@ -32,4 +32,7 @@ miny = gt[3] + width*gt[4] + height*gt[5]
 
 #get the coordinates in lat long
 latlong = transform.TransformPoint(minx,miny) 
-print(latlong)
+print(f"width:{width} height:{height}")
+print(f"minx:{minx} miny:{miny}")
+print(f"latlong:{latlong}")
+print(f"gt:{gt}")
