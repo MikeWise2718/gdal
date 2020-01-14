@@ -2,7 +2,7 @@ from osgeo import osr, gdal
 import os
 
 
-def process_file(filename):
+def process_file(filename,fname,verbose=False):
     # get the existing coordinate system
     ds = gdal.Open(filename)
     old_cs= osr.SpatialReference()
@@ -42,21 +42,35 @@ def process_file(filename):
     latlongminmin = transform.TransformPoint(minx,miny) 
     latlongmaxmax = transform.TransformPoint(maxx,maxy) 
     totpix = width*height
-    print(f"file:{filename}")
-    print(f"  width:{width} height:{height} totpix{totpix}")
-    print(f"  gt:{gt}")
-    print(f"  minx:{minx} miny:{miny}")
-    print(f"  maxx:{maxx} maxy:{maxy}")
-    print(f"  latlongminmin:{latlongminmin}")
-    print(f"  latlongmaxmax:{latlongmaxmax}")
+    if (verbose):
+        print(f"file:{filename}")
+        print(f"  width:{width} height:{height} totpix{totpix}")
+        print(f"  gt:{gt}")
+        print(f"  minx:{minx} miny:{miny}")
+        print(f"  maxx:{maxx} maxy:{maxy}")
+        print(f"  latlongminmin:{latlongminmin}")
+        print(f"  latlongmaxmax:{latlongmaxmax}")
+    llmn = latlongminmin
+    llmx = latlongmaxmax
+    line = f"{fname},{width},{height},{minx},{maxx},{miny},{maxy},{llmn[0]},{llmx[0]},{llmn[1]},{llmx[1]}"
+    return line
 
-def process_dir(dirname,fext):
+
+def process_dir(dirname,fext,olistfname="tifinfo.csv"):
+    ll = []
+    header = "filename,width,height,minx,maxx,miny,maxy,latmin,latmax,lngmin,lngmax"
+    ll.append(header)
     files = [f for f in os.listdir(dirname)]
     for f in files:
         fullname = dirname + "/" + f
         if fullname.endswith(fext):
-            process_file(fullname)
+            l = process_file(fullname,f)
+            ll.append(l)
     print(f"process_dir found {len(files)} files in {dirname}")
+    f = open(olistfname,"w")
+    f.write("\n".join(ll))
+    f.close()
+
 
 process_dir("Geotiff/batch1",".tif")
 # process_file('Geotiff/be_09040831.tif')
