@@ -52,13 +52,13 @@ def process_file(filename,fname,verbose=False):
         print(f"  latlongmaxmax:{latlongmaxmax}")
     llmn = latlongminmin
     llmx = latlongmaxmax
-    line = f"{fname},{width},{height},{minx},{maxx},{miny},{maxy},{llmn[0]},{llmx[0]},{llmn[1]},{llmx[1]}"
+    line = f"{fname},{width},{height},{minx},{maxx},{miny},{maxy},{llmn[0]},{llmx[0]},{llmn[1]},{llmx[1]},{ulx},{uly},{xres},{yres},{xskew},{yskew}"
     return line
 
 
 def process_dir(dirname,fext,olistfname="tifinfo.csv"):
     ll = []
-    header = "filename,width,height,minx,maxx,miny,maxy,latmin,latmax,lngmin,lngmax"
+    header = "filename,width,height,minx,maxx,miny,maxy,latmin,latmax,lngmin,lngmax,ulx,uly,xes,yres,xskew,yskew"
     ll.append(header)
     files = [f for f in os.listdir(dirname)]
     for f in files:
