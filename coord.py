@@ -2,7 +2,7 @@ from osgeo import osr, gdal
 import os
 import numpy as np
 
-def process_file(filename,fname,verbose=False):
+def process_file(filename,fname,verbose=False,write_elev_file=False):
     # get the existing coordinate system
     ds = gdal.Open(filename)
     old_cs= osr.SpatialReference()
@@ -67,6 +67,18 @@ def process_file(filename,fname,verbose=False):
         print(f"  elevation.shape:{elevation.shape}")
         print(f"  elevation mean:{meanelev}")
 
+    # for row caol https://gis.stackexchange.com/a/221430/53850
+    if (write_elev_file):
+        print(elevation)
+        efilename = os.path.splitext(fname)[0]+".csv"
+        f = open(efilename,"w")
+        f.write(f"## nrow:{nxelev}, ncol:{nyelev}, fname:{fname}\n")
+        f.write(f"row,col,elev\n")
+        for row in range(nxelev):
+            for col in range(nyelev):
+                f.write(f"{row},{col},{elevation[row][col]}\n")
+                #f.write(f"{elevation[row][col]}\n")
+        f.close()  
 
     llmn = latlongminmin
     llmx = latlongmaxmax
@@ -74,7 +86,7 @@ def process_file(filename,fname,verbose=False):
     return line
 
 
-def process_dir(dirname,fext,olistfname="tifinfo.csv",writefile=False):
+def process_dir(dirname,fext,summary_file_name="tifinfo.csv",write_summary_file=False,write_elev_file=False):
     ll = []
     header = "filename,width,height,minx,maxx,miny,maxy,latmin,latmax,lngmin,lngmax,ulx,uly,xes,yres,xskew,yskew,nxelev,nyelev,meanelev"
     ll.append(header)
@@ -82,17 +94,18 @@ def process_dir(dirname,fext,olistfname="tifinfo.csv",writefile=False):
     for f in files:
         fullname = dirname + "/" + f
         if fullname.endswith(fext):
-            l = process_file(fullname,f,True)
+            l = process_file(fullname,f,verbose=True,write_elev_file=write_elev_file)
             ll.append(l)
     print(f"process_dir found {len(files)} files in {dirname}")
 
-    if (writefile):
-        f = open(olistfname,"w")
+    if (write_summary_file):
+        f = open(summary_file_name,"w")
         f.write("\n".join(ll))
         f.close()
-        print(f"wrote {olistfname}")
+        print(f"wrote {write_summary_file}")
 
 
 
-process_dir("Geotiff/batch1",".tif",writefile=True)
+#process_dir("Geotiff/batch1-1",".tif",write_summary_file=True,write_elev_file=True)
+process_dir("Geotiff/batch1",".tif",write_summary_file=True,write_elev_file=False)
 # process_file('Geotiff/be_09040831.tif')
