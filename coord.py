@@ -42,10 +42,6 @@ def process_file(filename,fname,verbose=False):
     latlongminmin = transform.TransformPoint(minx,miny) 
     latlongmaxmax = transform.TransformPoint(maxx,maxy) 
     totpix = width*height
-
-    # get skews 
-    ulx, xres, xskew, uly, yskew, yres = ds.GetGeoTransform() 
-
     if (verbose):
         print(f"file:{filename}")
         print(f"  width:{width} height:{height} totpix{totpix}")
@@ -54,9 +50,6 @@ def process_file(filename,fname,verbose=False):
         print(f"  maxx:{maxx} maxy:{maxy}")
         print(f"  latlongminmin:{latlongminmin}")
         print(f"  latlongmaxmax:{latlongmaxmax}")
-        print(f"  ulx:{ulx} uly:{uly} ")
-        print(f"  xres:{xres} yres:{yres} ")
-        print(f"  xskew:{xskew} yskew:{yskew} ")
     llmn = latlongminmin
     llmx = latlongmaxmax
     line = f"{fname},{width},{height},{minx},{maxx},{miny},{maxy},{llmn[0]},{llmx[0]},{llmn[1]},{llmx[1]}"
@@ -68,11 +61,11 @@ def process_dir(dirname,fext,olistfname="tifinfo.csv"):
     header = "filename,width,height,minx,maxx,miny,maxy,latmin,latmax,lngmin,lngmax"
     ll.append(header)
     files = [f for f in os.listdir(dirname)]
-    for ff in files:
-        fullname = dirname + "/" + ff
+    for f in files:
+        fullname = dirname + "/" + f
         if fullname.endswith(fext):
-            line = process_file(fullname,ff,verbose=True)
-            ll.append(line)
+            l = process_file(fullname,f)
+            ll.append(l)
     print(f"process_dir found {len(files)} files in {dirname}")
     f = open(olistfname,"w")
     f.write("\n".join(ll))
