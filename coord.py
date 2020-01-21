@@ -2,8 +2,9 @@ from osgeo import osr, gdal
 import os
 import numpy as np
 import argparse
+import time
 
-def process_file(filename,fname,verbose=False,write_elev_file=False):
+def process_geotiff_file(filename,fname,verbose=False,write_elev_file=False,write_elev_idx=False):
     # get the existing coordinate system
     ds = gdal.Open(filename)
     old_cs= osr.SpatialReference()
@@ -43,6 +44,14 @@ def process_file(filename,fname,verbose=False,write_elev_file=False):
     latlongminmin = transform.TransformPoint(minx,miny) 
     latlongmaxmax = transform.TransformPoint(maxx,maxy) 
     totpix = width*height
+    dx = maxx-minx
+    dy = maxy-miny
+    xresmeter = 0
+    if width>0:
+        xresmeter = dx/width
+    yresmeter = 0
+    if height>0:
+        yresmeter = dy/height
 
     # get skews 
     ulx, xres, xskew, uly, yskew, yres = ds.GetGeoTransform() 
@@ -53,6 +62,10 @@ def process_file(filename,fname,verbose=False,write_elev_file=False):
     meanelev = np.mean(elevation)
     nxelev = elevation.shape[0]
     nyelev = elevation.shape[1]
+    latmin = latlongminmin[0]
+    latmax = latlongmaxmax[0]
+    lngmin = latlongminmin[1]
+    lngmax = latlongmaxmax[1]
 
     if (verbose):
         print(f"file:{filename}")
@@ -64,6 +77,7 @@ def process_file(filename,fname,verbose=False,write_elev_file=False):
         print(f"  latlongmaxmax:{latlongmaxmax}")
         print(f"  ulx:{ulx} uly:{uly} ")
         print(f"  xres:{xres} yres:{yres} ")
+        print(f"  xresmeter:{xresmeter} yresmeter:{yresmeter} ")
         print(f"  xskew:{xskew} yskew:{yskew} ")
         print(f"  elevation.shape:{elevation.shape}")
         print(f"  elevation mean:{meanelev}")
@@ -71,6 +85,8 @@ def process_file(filename,fname,verbose=False,write_elev_file=False):
     # for row caol https://gis.stackexchange.com/a/221430/53850
     if (write_elev_file):
         print(elevation)
+        start = time.time()
+        nline = 0
         efilename ="output/"+ os.path.splitext(fname)[0]+".csvc"
         f = open(efilename,"w")
         f.write(f"# geotiff file with elevation data in csvc format")
@@ -78,14 +94,23 @@ def process_file(filename,fname,verbose=False,write_elev_file=False):
         f.write(f"## fname:{fname}\n")
         f.write(f"## nrow:{nxelev}, ncol:{nyelev}, minx:{minx},maxx:{maxx},miny:{miny},maxy:{maxy}\n")
         f.write(f"## xres:{xres}, yres:{yres}, xskew:{xskew}, yskew:{yskew}\n")
-        f.write(f"## latlongminmin:{latlongminmin}, latlongmaxmax:{latlongmaxmax} ulx:{ulx}, uly:{uly}\n")
-        f.write(f"## elevation mean:{meanelev}\n")
-        f.write(f"row,col,elev\n")
+        f.write(f"## latmin:{latmin}, latmax:{latmax}, lngmin:{lngmin}, lngmax:{lngmax}, ulx:{ulx}, uly:{uly}\n")
+        f.write(f"## elevation.mean:{meanelev}\n")
+        if write_elev_idx:
+            f.write(f"row,col,elev\n")
+        else:
+            f.write(f"elev\n")
         for row in range(nxelev):
             for col in range(nyelev):
-                f.write(f"{row},{col},{elevation[row][col]}\n")
-                #f.write(f"{elevation[row][col]}\n")
+                nline += 1
+                elv = "{0:.2f}".format(elevation[row][col])
+                if write_elev_idx:
+                    f.write(f"{row},{col},{elv}\n")
+                else:
+                    f.write(f"{elv}\n")
         f.close()  
+        elap = time.time() - start
+        print(f"wrote {nline} lines to {efilename} in {elap} secs")
 
     llmn = latlongminmin
     llmx = latlongmaxmax
@@ -93,7 +118,7 @@ def process_file(filename,fname,verbose=False,write_elev_file=False):
     return line
 
 
-def process_geotiff_dir(dirname,summary_file_name="tifinfo.csv",write_summary_file=False,write_elev_file=False,fext=".tif"):
+def process_geotiff_dir(dirname,summary_file_name="tifinfo.csv",write_summary_file=False,write_elev_file=False,fext=".tif",write_elev_idx=False):
     ll = []
     header = "filename,width,height,minx,maxx,miny,maxy,latmin,latmax,lngmin,lngmax,ulx,uly,xes,yres,xskew,yskew,nxelev,nyelev,meanelev"
     ll.append(header)
@@ -101,7 +126,7 @@ def process_geotiff_dir(dirname,summary_file_name="tifinfo.csv",write_summary_fi
     for f in files:
         fullname = dirname + "/" + f
         if fullname.endswith(fext):
-            l = process_file(fullname,f,verbose=True,write_elev_file=write_elev_file)
+            l = process_geotiff_file(fullname,f,verbose=True,write_elev_file=write_elev_file,write_elev_idx=write_elev_idx)
             ll.append(l)
     print(f"process_dir found {len(files)} files in {dirname}")
 
@@ -120,6 +145,7 @@ if __name__ == "__main__":
     parser.add_argument("--foo", action='store_true')
     parser.add_argument('-wsf',"--write_geotiff_summary", help='write geotiff summary csv',  action='store_true')
     parser.add_argument('-wef',"--write_elevation_files", help='write elevation files as csvc', action='store_true')
+    parser.add_argument('-widx',"--write_elevation_idx", help='write index to elevation files', action='store_true')
     parser.add_argument('-gd',"--geotiff_directory",default="Geotiff/batch1-1", type=str, help='Geotiff directory',metavar="")
     parser.add_argument('-gbd',"--geotiff_big_directory",help='Geotiff big directory (Geotff/batch1)', action='store_true')
 
@@ -127,9 +153,10 @@ if __name__ == "__main__":
     foo = args.foo
     wsf = args.write_geotiff_summary
     wef = args.write_elevation_files
+    widx = args.write_elevation_idx
     geodir = args.geotiff_directory 
     gbd = args.geotiff_big_directory
     if gbd:
         geodir = "Geotiff/batch1"
-    print(f"args - wsf:{wsf} wef:{wef} gbd:{gbd} geodir:{geodir}")
-    process_geotiff_dir(geodir,write_summary_file=wsf,write_elev_file=wef)
+    print(f"args - wsf:{wsf} wef:{wef} gbd:{gbd} widx:{widx} geodir:{geodir}")
+    process_geotiff_dir(geodir,write_summary_file=wsf,write_elev_file=wef,write_elev_idx=widx)
