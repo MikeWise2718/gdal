@@ -1,4 +1,5 @@
 geotiff/batch1/
+output/
 
 # Byte-compiled / optimized / DLL files - Python https://github.com/github/gitignore/Python.gitignore
 __pycache__/

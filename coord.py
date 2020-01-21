@@ -70,9 +70,15 @@ def process_file(filename,fname,verbose=False,write_elev_file=False):
     # for row caol https://gis.stackexchange.com/a/221430/53850
     if (write_elev_file):
         print(elevation)
-        efilename = os.path.splitext(fname)[0]+".csv"
+        efilename ="output/"+ os.path.splitext(fname)[0]+".csvc"
         f = open(efilename,"w")
-        f.write(f"## nrow:{nxelev}, ncol:{nyelev}, fname:{fname}\n")
+        f.write(f"# geotiff file with elevation data in csvc format")
+        f.write(f"# csvc format is an extention of a CSV file with #-comments and embedded metadata")
+        f.write(f"## fname:{fname}\n")
+        f.write(f"## nrow:{nxelev}, ncol:{nyelev}, minx:{minx},maxx:{maxx},miny:{miny},maxy:{maxy}\n")
+        f.write(f"## xres:{xres}, yres:{yres}, xskew:{xskew}, yskew:{yskew}\n")
+        f.write(f"## latlongminmin:{latlongminmin}, latlongmaxmax:{latlongmaxmax} ulx:{ulx}, uly:{uly}\n")
+        f.write(f"## elevation mean:{meanelev}\n")
         f.write(f"row,col,elev\n")
         for row in range(nxelev):
             for col in range(nyelev):
@@ -102,7 +108,7 @@ def process_dir(dirname,fext,summary_file_name="tifinfo.csv",write_summary_file=
         f = open(summary_file_name,"w")
         f.write("\n".join(ll))
         f.close()
-        print(f"wrote {write_summary_file}")
+        print(f"wrote {len(ll)} lines to {summary_file_name}")
 
 
 
