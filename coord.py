@@ -1,6 +1,7 @@
 from osgeo import osr, gdal
 import os
 import numpy as np
+import argparse
 
 def process_file(filename,fname,verbose=False,write_elev_file=False):
     # get the existing coordinate system
@@ -92,7 +93,7 @@ def process_file(filename,fname,verbose=False,write_elev_file=False):
     return line
 
 
-def process_dir(dirname,fext,summary_file_name="tifinfo.csv",write_summary_file=False,write_elev_file=False):
+def process_geotiff_dir(dirname,summary_file_name="tifinfo.csv",write_summary_file=False,write_elev_file=False,fext=".tif"):
     ll = []
     header = "filename,width,height,minx,maxx,miny,maxy,latmin,latmax,lngmin,lngmax,ulx,uly,xes,yres,xskew,yskew,nxelev,nyelev,meanelev"
     ll.append(header)
@@ -112,6 +113,23 @@ def process_dir(dirname,fext,summary_file_name="tifinfo.csv",write_summary_file=
 
 
 
-#process_dir("Geotiff/batch1-1",".tif",write_summary_file=True,write_elev_file=True)
-process_dir("Geotiff/batch1",".tif",write_summary_file=True,write_elev_file=False)
-# process_file('Geotiff/be_09040831.tif')
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Process geotiff files into a csv or csvc format')
+
+    parser.add_argument("--foo", action='store_true')
+    parser.add_argument('-wsf',"--write_geotiff_summary", help='write geotiff summary csv',  action='store_true')
+    parser.add_argument('-wef',"--write_elevation_files", help='write elevation files as csvc', action='store_true')
+    parser.add_argument('-gd',"--geotiff_directory",default="Geotiff/batch1-1", type=str, help='Geotiff directory',metavar="")
+    parser.add_argument('-gbd',"--geotiff_big_directory",help='Geotiff big directory (Geotff/batch1)', action='store_true')
+
+    args = parser.parse_args()
+    foo = args.foo
+    wsf = args.write_geotiff_summary
+    wef = args.write_elevation_files
+    geodir = args.geotiff_directory 
+    gbd = args.geotiff_big_directory
+    if gbd:
+        geodir = "Geotiff/batch1"
+    print(f"args - wsf:{wsf} wef:{wef} gbd:{gbd} geodir:{geodir}")
+    process_geotiff_dir(geodir,write_summary_file=wsf,write_elev_file=wef)
